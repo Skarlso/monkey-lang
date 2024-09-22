@@ -1,6 +1,8 @@
 package parser
 
 import (
+	"fmt"
+
 	"github.com/Skarlso/horcsog/ast"
 	"github.com/Skarlso/horcsog/lexer"
 	"github.com/Skarlso/horcsog/token"
@@ -9,6 +11,7 @@ import (
 type Parser struct {
 	l *lexer.Lexer
 
+	errors    []string
 	curToken  token.Token
 	peekToken token.Token // to figure out what to do.
 }
@@ -21,6 +24,16 @@ func New(l *lexer.Lexer) *Parser {
 	p.nextToken()
 
 	return p
+}
+
+func (p *Parser) Errors() []string {
+	return p.errors
+}
+
+// peekError this could be better named, setPeekError
+func (p *Parser) peekError(t token.TokenType) {
+	msg := fmt.Sprintf("expected next token to be %s, got %s instead", t, p.peekToken.Type)
+	p.errors = append(p.errors, msg)
 }
 
 func (p *Parser) nextToken() {
@@ -63,11 +76,13 @@ func (p *Parser) parseLetStatement() *ast.LetStatement {
 
 	stmt.Name = &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
 
+	// for now, we ignore if we encountered something unexpected.
 	if !p.expectPeek(token.ASSIGN) {
 		return nil
 	}
 
 	// TODO: We're skipping the expressions until we // encounter a semicolon
+	// for now this skips everything after the equal sign up until the closing semicolon.
 	for !p.curTokenIs(token.SEMICOLON) {
 		p.nextToken()
 	}
@@ -81,6 +96,8 @@ func (p *Parser) curTokenIs(t token.TokenType) bool {
 func (p *Parser) peekTokenIs(t token.TokenType) bool {
 	return p.peekToken.Type == t
 }
+
+// assertion function for what token is expected next.
 func (p *Parser) expectPeek(t token.TokenType) bool {
 	if p.peekTokenIs(t) {
 		p.nextToken()
@@ -88,5 +105,6 @@ func (p *Parser) expectPeek(t token.TokenType) bool {
 		return true
 	}
 
+	p.peekError(t)
 	return false
 }
