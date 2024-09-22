@@ -13,6 +13,44 @@ func TestLetStatements(t *testing.T) {
 let x = 5;
 let y = 10;
 let foobar = 838383;
+`
+
+	l := lexer.New(input)
+	p := New(l)
+
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
+	if program == nil {
+		t.Fatal("ParseProgram returned nil")
+	}
+
+	if len(program.Statements) != 3 {
+		t.Fatalf("program.Statements does not contain 3 statements. got=%d", len(program.Statements))
+	}
+
+	// these tests run by preserving the place
+	tests := []struct {
+		expectedIdentifier string
+	}{
+		{"x"},
+		{"y"},
+		{"foobar"},
+	}
+
+	for i, tt := range tests {
+		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+			stmt := program.Statements[i]
+			if !testLetStatements(t, stmt, tt.expectedIdentifier) {
+				return
+			}
+		})
+	}
+}
+
+func TestLetStatementsFailing(t *testing.T) {
+	input := `
+let x 5;
+let = 10;
 let 838383;
 `
 
