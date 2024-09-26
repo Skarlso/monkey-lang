@@ -1,4 +1,4 @@
-# Horcsog
+# Went
 
 Is a programming language.
 
