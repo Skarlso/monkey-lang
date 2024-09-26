@@ -3,7 +3,7 @@ package ast
 import (
 	"bytes"
 
-	"github.com/Skarlso/horcsog/token"
+	"github.com/Skarlso/went/token"
 )
 
 type Node interface {

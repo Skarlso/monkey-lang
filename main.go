@@ -5,7 +5,7 @@ import (
 	"os"
 	"os/user"
 
-	"github.com/Skarlso/horcsog/repl"
+	"github.com/Skarlso/went/repl"
 )
 
 func main() {
@@ -14,7 +14,7 @@ func main() {
 		panic(err)
 	}
 
-	fmt.Printf("Hello %s! This is the Horcsog programming language!\n", user.Username)
+	fmt.Printf("Hello %s! This is the Went programming language!\n", user.Username)
 	fmt.Printf("Feel free to type in commands\n")
 	repl.Start(os.Stdin, os.Stdout)
 }

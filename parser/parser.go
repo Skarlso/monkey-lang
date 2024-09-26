@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/Skarlso/horcsog/ast"
-	"github.com/Skarlso/horcsog/lexer"
-	"github.com/Skarlso/horcsog/token"
+	"github.com/Skarlso/went/ast"
+	"github.com/Skarlso/went/lexer"
+	"github.com/Skarlso/went/token"
 )
 
 // Precedence order.
