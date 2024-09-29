@@ -30,6 +30,7 @@ var precedences = map[token.TokenType]int{
 	token.MINUS:    SUM,
 	token.SLASH:    PRODUCT,
 	token.ASTERISK: PRODUCT,
+	token.LPAREN:   CALL,
 }
 
 type Parser struct {
@@ -70,6 +71,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.LPAREN, p.parseGroupedExpression)
 	p.registerPrefix(token.IF, p.parseIfExpression)
 	p.registerPrefix(token.FUNCTION, p.parseFunctionLiteral)
+	p.registerInfix(token.LPAREN, p.parseCallExpression)
 
 	// read two tokens, so curToken and peekToken are both set
 	p.nextToken()
@@ -298,6 +300,42 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 	return stmt
 }
 
+func (p *Parser) parseCallExpression(function ast.Expression) ast.Expression {
+	exp := &ast.CallExpression{Token: p.curToken, Function: function}
+	exp.Arguments = p.parseCallArguments()
+
+	return exp
+}
+
+func (p *Parser) parseCallArguments() []ast.Expression {
+	args := []ast.Expression{}
+
+	// handle empty arguments
+	if p.peekTokenIs(token.RPAREN) {
+		p.nextToken()
+
+		return args
+	}
+
+	p.nextToken() // skip the parenthesis
+	// parse expression because the parameter can be an entire expression or function call
+	// or anything the likes...
+	args = append(args, p.parseExpression(LOWEST))
+
+	for p.peekTokenIs(token.COMMA) {
+		// skip the comma and the identifier
+		p.nextToken()
+		p.nextToken()
+		args = append(args, p.parseExpression(LOWEST))
+	}
+
+	if !p.expectPeek(token.RPAREN) {
+		return nil
+	}
+
+	return args
+}
+
 func (p *Parser) noPrefixParseFnError(t token.TokenType) {
 	msg := fmt.Sprintf("no prefix parse function for %s found", t)
 	p.errors = append(p.errors, msg)
@@ -332,10 +370,14 @@ func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
 
 	p.nextToken()
 
-	// TODO skip for now.
-	for !p.curTokenIs(token.SEMICOLON) {
+	stmt.ReturnValue = p.parseExpression(LOWEST)
+
+	if p.peekTokenIs(token.SEMICOLON) {
 		p.nextToken()
 	}
+	// for !p.curTokenIs(token.SEMICOLON) {
+	// 	p.nextToken()
+	// }
 
 	return stmt
 }
@@ -377,7 +419,15 @@ func (p *Parser) parseLetStatement() *ast.LetStatement {
 
 	// TODO: We're skipping the expressions until we // encounter a semicolon
 	// for now this skips everything after the equal sign up until the closing semicolon.
-	for !p.curTokenIs(token.SEMICOLON) {
+	// for !p.curTokenIs(token.SEMICOLON) {
+	// 	p.nextToken()
+	// }
+
+	p.nextToken()
+
+	stmt.Value = p.parseExpression(LOWEST)
+
+	if p.peekTokenIs(token.SEMICOLON) {
 		p.nextToken()
 	}
 
